@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - View Uploaded Images</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+        }
+        #image-list {
+            list-style-type: none;
+            padding: 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        #image-list li {
+            display: inline-block;
+            width: 200px;
+            height: 200px;
+        }
+        #image-list img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+    </style>
+</head>
+<body>
+    <h1>Uploaded Images</h1>
+    <ul id="image-list">
+        <!-- Uploaded images will be listed here -->
+    </ul>
+
+    <script>
+        // Fetch the list of uploaded images from the server
+        fetch('/admin/images')
+            .then(response => response.json())  // Parse the JSON response
+            .then(images => {
+                const imageList = document.getElementById('image-list');
+                
+                // Loop through the list of images and display them
+                images.forEach(image => {
+                    const listItem = document.createElement('li');
+                    const imageElement = document.createElement('img');
+                    imageElement.src = '/uploads/' + image;  // URL to the image
+                    imageElement.alt = image;  // Alt text for image
+                    listItem.appendChild(imageElement);
+                    imageList.appendChild(listItem);
+                });
+            })
+            .catch(error => {
+                console.error('Error fetching images:', error);
+            });
+    </script>
+</body>
+</html>

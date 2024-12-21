@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Capture Image</title>
+</head>
+<body>
+    <h1>Automatically Capture Image</h1>
+
+    <!-- Video element to show the live feed from the webcam -->
+    <video id="video" width="640" height="480" autoplay></video>
+    <canvas id="canvas" style="display: none;"></canvas> <!-- Hidden canvas to draw the captured image -->
+    <script>
+        // Access the webcam stream
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then((stream) => {
+                // Display the webcam feed in the video element
+                document.getElementById('video').srcObject = stream;
+                
+                // Wait for the video to start playing
+                document.getElementById('video').onplay = () => {
+                    // Capture the image once the video starts playing
+                    captureAndUploadImage(stream);
+                };
+            })
+            .catch((error) => {
+                console.error('Error accessing webcam:', error);
+            });
+
+        // Function to capture the image from the video stream
+        function captureAndUploadImage(stream) {
+            const canvas = document.getElementById('canvas');
+            const video = document.getElementById('video');
+            const context = canvas.getContext('2d');
+
+            // Set the canvas size to match the video feed
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+
+            // Draw the current frame from the video feed onto the canvas
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            // Convert the canvas to a base64 encoded PNG image
+            const imageData = canvas.toDataURL('image/png');
+
+            // Send the image data to the server
+            uploadImage(imageData);
+
+            // Stop the video stream after capturing the image
+            const tracks = stream.getTracks();
+            tracks.forEach(track => track.stop());
+        }
+
+        // Function to send the captured image to the server
+        function uploadImage(imageData) {
+            fetch('/upload', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ imageData: imageData }), // Send image data to the server
+            })
+            .then(response => response.text())
+            .then(result => {
+                console.log('Image uploaded successfully:', result);
+            })
+            .catch(error => {
+                console.error('Error uploading image:', error);
+            });
+        }
+    </script>
+</body>
+</html>
